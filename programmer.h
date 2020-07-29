@@ -573,6 +573,11 @@ int jlink_spi_init(void);
 int ni845x_spi_init(void);
 #endif
 
+/* loongson3_spi.c */
+#if CONFIG_LOONGSON3_SPI == 1
+int loongson3_spi_init(void);
+#endif
+
 /* flashrom.c */
 struct decode_sizes {
 	uint32_t parallel;

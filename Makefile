@@ -696,6 +696,9 @@ CONFIG_DIGILENT_SPI ?= yes
 # Disable J-Link for now.
 CONFIG_JLINK_SPI ?= no
 
+# Always enable Loongson-3 SPI
+CONFIG_LOONGSON3_SPI ?= yes
+
 # Disable wiki printing by default. It is only useful if you have wiki access.
 CONFIG_PRINT_WIKI ?= no
 
@@ -1036,6 +1039,11 @@ endif
 
 ifneq ($(NEED_SERIAL), )
 LIB_OBJS += serial.o custom_baud.o
+endif
+
+ifeq ($(CONFIG_LOONGSON3_SPI), yes)
+FEATURE_CFLAGS += -D'CONFIG_LOONGSON3_SPI=1'
+PROGRAMMER_OBJS += loongson3_spi.o
 endif
 
 ifneq ($(NEED_POSIX_SOCKETS), )
