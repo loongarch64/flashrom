@@ -275,6 +275,11 @@ extern enum chipbustype internal_buses_supported;
 int register_spi_bitbang_master(const struct bitbang_spi_master *master, void *spi_data);
 
 
+/* loongson3_spi.c */
+#if CONFIG_LOONGSON3_SPI == 1
+int loongson3_spi_init(void);
+#endif
+
 /* flashrom.c */
 struct decode_sizes {
 	uint32_t parallel;

@@ -518,6 +518,8 @@ CONFIG_JLINK_SPI ?= no
 
 # National Instruments USB-845x is Windows only and needs a proprietary library.
 CONFIG_NI845X_SPI ?= no
+# Always enable Loongson-3 SPI
+CONFIG_LOONGSON3_SPI ?= yes
 
 # Disable wiki printing by default. It is only useful if you have wiki access.
 CONFIG_PRINT_WIKI ?= no
@@ -771,6 +773,11 @@ endif
 ifeq ($(CONFIG_NI845X_SPI), yes)
 FEATURE_FLAGS += -D'CONFIG_NI845X_SPI=1'
 PROGRAMMER_OBJS += ni845x_spi.o
+endif
+
+ifeq ($(CONFIG_LOONGSON3_SPI), yes)
+FEATURE_CFLAGS += -D'CONFIG_LOONGSON3_SPI=1'
+PROGRAMMER_OBJS += loongson3_spi.o
 endif
 
 USE_BITBANG_SPI := $(if $(call filter_deps,$(DEPENDS_ON_BITBANG_SPI)),yes,no)
