@@ -155,7 +155,9 @@ int loongson3_spi_init(void)
 	/* Enable SPI Controller */
 	reg = mmio_readb(spictrl_base + SPICTRL_SPCR);
 	reg |= SPCR_MSTR | SPCR_SPE;
+	reg &= ~0x2;
 	mmio_writeb(reg, spictrl_base + SPICTRL_SPCR);
+	mmio_writeb(0x0, spictrl_base + 0x3);
 
 	/* Disable read engine for software control */
 	reg = mmio_readb(spictrl_base + SPICTRL_SFCP);
@@ -209,7 +211,7 @@ static int loongson3_spi_send_command(const struct flashctx *flash, unsigned int
 	}
 
 	for (i = 0; i < readcnt; i++) {
-		mmio_writeb(writearr[i], spictrl_base + SPICTRL_FIFO);
+		mmio_writeb(0, spictrl_base + SPICTRL_FIFO);
 
 		/* Wait until Read FIFO not empty */
 		while (mmio_readb(spictrl_base + SPICTRL_SPSR) & SPSR_RFEMPTY);
