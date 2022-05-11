@@ -59,10 +59,17 @@
 static uint8_t *spictrl_base;
 
 static int loongson3_spi_shutdown(void *data);
-static int loongson3_spi_send_command(const struct flashctx *flash, unsigned int writecnt,
+static int loongson3_spi_send_command(struct flashctx *flash, unsigned int writecnt,
 				  unsigned int readcnt,
-				   const uint8_t *writearr,
+				   const unsigned char *writearr,
 				   uint8_t *readarr);
+
+
+//loongson3_spi.c:70:27: error: initialization of '
+//int (*)(struct flashrom_flashctx *, unsigned int,  unsigned int,  const unsigned char *, unsigned char *)' from incompatible pointer type '
+//int (*)(const struct flashrom_flashctx *, unsigned int,  unsigned int,  const uint8_t *, uint8_t *)' {aka '
+//int (*)(const struct flashrom_flashctx *, unsigned int,  unsigned int,  const unsigned char *, unsigned char *)'} [-Werror=incompatible-pointer-types]
+//
 
 static const struct spi_master spi_master_loongson3 = {
 	.max_data_read	= MAX_DATA_READ_UNLIMITED,
@@ -190,9 +197,9 @@ static int loongson3_spi_shutdown(void *data)
 	return 0;
 }
 
-static int loongson3_spi_send_command(const struct flashctx *flash, unsigned int writecnt,
+static int loongson3_spi_send_command(struct flashctx *flash, unsigned int writecnt,
 				  unsigned int readcnt,
-				   const uint8_t *writearr,
+				   const unsigned char *writearr,
 				   uint8_t *readarr)
 {
 	unsigned int i;

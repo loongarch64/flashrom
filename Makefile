@@ -106,7 +106,7 @@ endif
 # IMPORTANT: The following line must be placed before TARGET_OS is ever used
 # (of course), but should come after any lines setting CC because the line
 # below uses CC itself.
-override TARGET_OS := $(strip $(call debug_shell,$(CC) $(CPPFLAGS) -E os.h 2>/dev/null | grep -v '^\#' | grep '"' | cut -f 2 -d'"'))
+override TARGET_OS := $(strip $(call debug_shell,$(CC) $(CPPFLAGS) -E os.h 2>/dev/null | grep -v '^\#' | tail -n 1 | grep '"' | cut -f 2 -d'"'))
 
 ifeq ($(TARGET_OS), Darwin)
 override CPPFLAGS += -I/opt/local/include -I/usr/local/include
@@ -421,7 +421,7 @@ endif
 # IMPORTANT: The following line must be placed before ARCH is ever used
 # (of course), but should come after any lines setting CC because the line
 # below uses CC itself.
-override ARCH := $(strip $(call debug_shell,$(CC) $(CPPFLAGS) -E archtest.c 2>/dev/null | grep -v '^\#' | grep '"' | cut -f 2 -d'"'))
+override ARCH := $(strip $(call debug_shell,$(CC) $(CPPFLAGS) -E archtest.c 2>/dev/null | grep -v '^\#' | tail -n 1 | grep '"' | cut -f 2 -d'"'))
 override ENDIAN := $(strip $(call debug_shell,$(CC) $(CPPFLAGS) -E endiantest.c 2>/dev/null | grep -v '^\#'))
 
 # Disable the internal programmer on unsupported architectures (everything but x86 and mipsel)
@@ -476,7 +476,7 @@ endif
 # Disable all drivers needing raw access (memory, PCI, port I/O) on
 # architectures with unknown raw access properties.
 # Right now those architectures are alpha hppa m68k sh s390
-ifneq ($(ARCH),$(filter $(ARCH),x86 mips ppc arm sparc arc))
+ifneq ($(ARCH),$(filter $(ARCH),x86 mips ppc arm sparc arc loongarch))
 ifeq ($(CONFIG_RAYER_SPI), yes)
 UNSUPPORTED_FEATURES += CONFIG_RAYER_SPI=yes
 else
@@ -1037,13 +1037,13 @@ LIBS += -lni845x
 PROGRAMMER_OBJS += ni845x_spi.o
 endif
 
-ifneq ($(NEED_SERIAL), )
-LIB_OBJS += serial.o custom_baud.o
-endif
-
 ifeq ($(CONFIG_LOONGSON3_SPI), yes)
 FEATURE_CFLAGS += -D'CONFIG_LOONGSON3_SPI=1'
 PROGRAMMER_OBJS += loongson3_spi.o
+endif
+
+ifneq ($(NEED_SERIAL), )
+LIB_OBJS += serial.o custom_baud.o
 endif
 
 ifneq ($(NEED_POSIX_SOCKETS), )

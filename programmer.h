@@ -127,6 +127,9 @@ enum programmer {
 #if CONFIG_STLINKV3_SPI == 1
 	PROGRAMMER_STLINKV3_SPI,
 #endif
+#if CONFIG_LOONGSON3_SPI == 1
+	PROGRAMMER_LOONGSON3_SPI,
+#endif
 	PROGRAMMER_INVALID /* This must always be the last entry. */
 };
 

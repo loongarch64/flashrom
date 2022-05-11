@@ -62,6 +62,9 @@
 #elif defined (__hppa__) || defined (__hppa)
 	#define __FLASHROM_ARCH__ "hppa"
 	#define IS_HPPA 1
+#elif defined (__loongarch__)
+	#define __FLASHROM_ARCH__ "loongarch"
+	#define IS_LOONGARCH 1
 #elif defined (__m68k__)
 	#define __FLASHROM_ARCH__ "m68k"
 	#define IS_M68K 1
@@ -79,7 +82,7 @@
 	#define IS_ARC 1
 #endif
 
-#if !(IS_X86 || IS_MIPS || IS_PPC || IS_ARM || IS_SPARC || IS_ALPHA || IS_HPPA || IS_M68K || IS_RISCV || IS_SH || IS_S390 || IS_ARC)
+#if !(IS_X86 || IS_MIPS || IS_PPC || IS_ARM || IS_SPARC || IS_ALPHA || IS_HPPA || IS_LOONGARCH || IS_M68K || IS_RISCV || IS_SH || IS_S390 || IS_ARC)
 #error Unknown architecture
 #endif
 

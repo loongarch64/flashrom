@@ -279,6 +279,10 @@ int libpayload_wrmsr(int addr, msr_t msr);
 
 /* PCI port I/O is not yet implemented on PowerPC. */
 
+#elif IS_LOONGARCH
+
+/* PCI port I/O is not yet implemented on LoongArch. */
+
 #elif IS_MIPS
 
 /* PCI port I/O is not yet implemented on MIPS. */
