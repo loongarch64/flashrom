@@ -13,8 +13,6 @@
  * GNU General Public License for more details.
  */
 
-#if CONFIG_LOONGSON3_SPI == 1
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -28,6 +26,8 @@
 #include <linux/types.h>
 #include "flash.h"
 #include "chipdrivers.h"
+#include "hwaccess_physmap.h"
+#include "platform/pci.h"
 #include "programmer.h"
 #include "spi.h"
 
@@ -58,20 +58,14 @@
 
 static uint8_t *spictrl_base;
 
-static int loongson3_spi_shutdown(void *data);
-static int loongson3_spi_send_command(const struct flashctx *flash, unsigned int writecnt,
-				  unsigned int readcnt,
-				   const uint8_t *writearr,
-				   uint8_t *readarr);
+/* Accumulate delays to be plucked between CS deassertion and CS assertions. */
+static unsigned int stored_delay_us = 0;
 
-static const struct spi_master spi_master_loongson3 = {
-	.max_data_read	= MAX_DATA_READ_UNLIMITED,
-	.max_data_write	= MAX_DATA_WRITE_UNLIMITED,
-	.command	= loongson3_spi_send_command,
-	.multicommand	= default_spi_send_multicommand,
-	.read		= default_spi_read,
-	.write_256	= default_spi_write_256,
-	.write_aai	= default_spi_write_aai,
+static const struct dev_entry devs_loongson3_spi[] = {
+    //FIXME: usb id
+	{0x1A86, 0x5512, OK, "Winchiphead (WCH)", "CH341A"},
+
+	{0},
 };
 
 static int cpu_is_loongson64c(char *cpu)
@@ -104,6 +98,81 @@ static int cpu_is_loongson64g(char *cpu)
 
 	return 0;
 }
+
+static void loongson3_spi_delay(unsigned int usecs)
+{
+	/* There is space for 28 bytes instructions of 750 ns each in the CS packet (32 - 4 for the actual CS
+	 * instructions), thus max 21 us, but we avoid getting too near to this boundary and use
+	 * internal_delay() for durations over 20 us. */
+	if ((usecs + stored_delay_us) > 20) {
+		unsigned int inc = 20 - stored_delay_us;
+		internal_delay(usecs - inc);
+		usecs = inc;
+	}
+	stored_delay_us += usecs;
+}
+
+static int loongson3_spi_send_command(const struct flashctx *flash, unsigned int writecnt,
+				  unsigned int readcnt,
+				   const uint8_t *writearr,
+				   uint8_t *readarr)
+{
+	unsigned int i;
+
+	msg_pwarn("writecnt: %d, readcnt: %d\n", writecnt, readcnt);
+
+	mmio_writeb(SOFTCS_ASSERT, spictrl_base + SPICTRL_SOFTCS);
+
+	for (i = 0; i < writecnt; i++) {
+		mmio_writeb(writearr[i], spictrl_base + SPICTRL_FIFO);
+
+		/* Wait until Read FIFO not empty */
+		while (mmio_readb(spictrl_base + SPICTRL_SPSR) & SPSR_RFEMPTY);
+
+		mmio_readb(spictrl_base + SPICTRL_FIFO);
+	}
+
+	for (i = 0; i < readcnt; i++) {
+		mmio_writeb(0, spictrl_base + SPICTRL_FIFO);
+
+		/* Wait until Read FIFO not empty */
+		while (mmio_readb(spictrl_base + SPICTRL_SPSR) & SPSR_RFEMPTY);
+
+		readarr[i] = mmio_readb(spictrl_base + SPICTRL_FIFO);
+	}
+
+	mmio_writeb(SOFTCS_DESSERT, spictrl_base + SPICTRL_SOFTCS);
+
+	return 0;
+}
+
+static int loongson3_spi_shutdown(void *data)
+{
+	if (!spictrl_base) {
+		uint8_t reg;
+
+		/* Disable soft CS */
+		mmio_writeb(0x0, spictrl_base + SPICTRL_SOFTCS);
+
+		/* Enable read engine again */
+		reg = mmio_readb(spictrl_base + SPICTRL_SFCP);
+		reg |= SFCP_MEMEN;
+		mmio_writeb(reg, spictrl_base + SPICTRL_SFCP);
+	}
+
+	return 0;
+}
+
+static const struct spi_master spi_master_loongson3 = {
+	.max_data_read	= MAX_DATA_READ_UNLIMITED,
+	.max_data_write	= MAX_DATA_WRITE_UNLIMITED,
+	.command	= loongson3_spi_send_command,
+	.multicommand	= default_spi_send_multicommand,
+	.read		= default_spi_read,
+	.write_256	= default_spi_write_256,
+	.write_aai	= default_spi_write_aai,
+	.shutdown	= loongson3_spi_shutdown,
+};
 
 int loongson3_spi_init(void)
 {
@@ -169,60 +238,19 @@ int loongson3_spi_init(void)
 	while (!(mmio_readb(spictrl_base + SPICTRL_SPSR) & SPSR_RFEMPTY))
 		mmio_readb(spictrl_base + SPICTRL_FIFO);
 
-	register_spi_master(&spi_master_loongson3);
+	register_spi_master(&spi_master_loongson3, NULL);
 	return 0;
 }
 
-static int loongson3_spi_shutdown(void *data)
-{
-	if (!spictrl_base) {
-		uint8_t reg;
-
-		/* Disable soft CS */
-		mmio_writeb(0x0, spictrl_base + SPICTRL_SOFTCS);
-
-		/* Enable read engine again */
-		reg = mmio_readb(spictrl_base + SPICTRL_SFCP);
-		reg |= SFCP_MEMEN;
-		mmio_writeb(reg, spictrl_base + SPICTRL_SFCP);
-	}
-
-	return 0;
-}
-
-static int loongson3_spi_send_command(const struct flashctx *flash, unsigned int writecnt,
-				  unsigned int readcnt,
-				   const uint8_t *writearr,
-				   uint8_t *readarr)
-{
-	unsigned int i;
-
-	msg_pwarn("writecnt: %d, readcnt: %d\n", writecnt, readcnt);
-
-	mmio_writeb(SOFTCS_ASSERT, spictrl_base + SPICTRL_SOFTCS);
-
-	for (i = 0; i < writecnt; i++) {
-		mmio_writeb(writearr[i], spictrl_base + SPICTRL_FIFO);
-
-		/* Wait until Read FIFO not empty */
-		while (mmio_readb(spictrl_base + SPICTRL_SPSR) & SPSR_RFEMPTY);
-
-		mmio_readb(spictrl_base + SPICTRL_FIFO);
-	}
-
-	for (i = 0; i < readcnt; i++) {
-		mmio_writeb(0, spictrl_base + SPICTRL_FIFO);
-
-		/* Wait until Read FIFO not empty */
-		while (mmio_readb(spictrl_base + SPICTRL_SPSR) & SPSR_RFEMPTY);
-
-		readarr[i] = mmio_readb(spictrl_base + SPICTRL_FIFO);
-	}
-
-	mmio_writeb(SOFTCS_DESSERT, spictrl_base + SPICTRL_SOFTCS);
-
-	return 0;
-}
+const struct programmer_entry programmer_loongson3_spi = {
+	.name			= "loongson3_spi",
+	.type			= USB,
+	.devs.dev		= devs_loongson3_spi,
+	.init			= loongson3_spi_init,
+	.map_flash_region	= fallback_map,
+	.unmap_flash_region	= fallback_unmap,
+	.delay			= loongson3_spi_delay,
+};
 
 #if 0
 #define FIFO_DETPTH	4
@@ -286,5 +314,3 @@ static int loongson3_spi_send_command(const struct flashctx *flash, unsigned int
 	return 0;
 }
 #endif
-
-#endif // CONFIG_LOONGSON3_SPI == 1

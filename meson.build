@@ -61,6 +61,7 @@ config_internal = get_option('config_internal')
 config_it8212 = get_option('config_it8212')
 config_linux_mtd = get_option('config_linux_mtd')
 config_linux_spi = get_option('config_linux_spi')
+config_loongson3_spi = get_option('config_loongson3_spi')
 config_mstarddc_spi = get_option('config_mstarddc_spi')
 config_nic3com = get_option('config_nic3com')
 config_nicintel_eeprom = get_option('config_nicintel_eeprom')
@@ -99,7 +100,7 @@ need_bitbang_spi = [
 ].contains(true)
 need_raw_mem_access = [
   config_atapromise, config_drkaiser, config_gfxnvidia, config_internal,
-  config_it8212, config_nicintel, config_nicintel_eeprom, config_nicintel_spi,
+  config_it8212, config_loongson3_spi, config_nicintel, config_nicintel_eeprom, config_nicintel_spi,
   config_ogp_spi, config_satamv, config_satasii,
 ].contains(true)
 # Internal programmer uses x86 features if the system is x86
@@ -269,6 +270,10 @@ endif
 if config_linux_spi
   srcs += 'linux_spi.c'
   cargs += '-DCONFIG_LINUX_SPI=1'
+endif
+if config_loongson3_spi
+  srcs += 'loongson3_spi.c'
+  cargs += '-DCONFIG_LOONGSON3_SPI=1'
 endif
 if config_mstarddc_spi
   srcs += 'mstarddc_spi.c'
