@@ -35,6 +35,8 @@
 	#define __FLASHROM_ARCH__ "alpha"
 #elif defined (__hppa__) || defined (__hppa)
 	#define __FLASHROM_ARCH__ "hppa"
+#elif defined (__loongarch__)
+	#define __FLASHROM_ARCH__ "loongarch"
 #elif defined (__m68k__)
 	#define __FLASHROM_ARCH__ "m68k"
 #elif defined (__riscv)

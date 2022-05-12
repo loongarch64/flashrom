@@ -17,7 +17,7 @@
  * This file determinate the target endian. It should only be used my the Makefile
  */
 
-#if defined (__i386__) || defined (__x86_64__) || defined(__amd64__)
+#if defined (__i386__) || defined (__x86_64__) || defined(__amd64__) || defined(__loongarch__)
 /* All x86 is little-endian. */
 #define __FLASHROM_LITTLE_ENDIAN__ 1
 #elif defined (__mips) || defined (__mips__) || defined (__MIPS__) || defined (mips)

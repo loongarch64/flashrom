@@ -114,6 +114,7 @@ DEPENDS_ON_RAW_MEM_ACCESS := \
 	CONFIG_GFXNVIDIA \
 	CONFIG_INTERNAL_X86 \
 	CONFIG_IT8212 \
+	CONFIG_LOONGSON3_SPI \
 	CONFIG_NICINTEL \
 	CONFIG_NICINTEL_EEPROM \
 	CONFIG_NICINTEL_SPI \
@@ -157,6 +158,7 @@ DEPENDS_ON_LIBUSB1 := \
 	CONFIG_DEDIPROG \
 	CONFIG_DEVELOPERBOX_SPI \
 	CONFIG_DIGILENT_SPI \
+	CONFIG_LOONGSON3_SPI \
 	CONFIG_PICKIT2_SPI \
 	CONFIG_RAIDEN_DEBUG_SPI \
 	CONFIG_STLINKV3_SPI \
@@ -362,7 +364,7 @@ endif
 # Additionally disable all drivers needing raw access (memory, PCI, port I/O)
 # on architectures with unknown raw access properties.
 # Right now those architectures are alpha hppa m68k sh s390
-ifneq ($(ARCH), $(filter $(ARCH), x86 mips ppc arm sparc arc))
+ifneq ($(ARCH), $(filter $(ARCH), x86 mips ppc arm sparc arc loongarch))
 $(call mark_unsupported,$(DEPENDS_ON_RAW_MEM_ACCESS))
 endif
 
@@ -518,6 +520,9 @@ CONFIG_JLINK_SPI ?= no
 
 # National Instruments USB-845x is Windows only and needs a proprietary library.
 CONFIG_NI845X_SPI ?= no
+
+# Always enable Loongson-3 SPI
+CONFIG_LOONGSON3_SPI ?= yes
 
 # Disable wiki printing by default. It is only useful if you have wiki access.
 CONFIG_PRINT_WIKI ?= no
@@ -771,6 +776,11 @@ endif
 ifeq ($(CONFIG_NI845X_SPI), yes)
 FEATURE_FLAGS += -D'CONFIG_NI845X_SPI=1'
 PROGRAMMER_OBJS += ni845x_spi.o
+endif
+
+ifeq ($(CONFIG_LOONGSON3_SPI), yes)
+FEATURE_FLAGS += -D'CONFIG_LOONGSON3_SPI=1'
+PROGRAMMER_OBJS += loongson3_spi.o
 endif
 
 USE_BITBANG_SPI := $(if $(call filter_deps,$(DEPENDS_ON_BITBANG_SPI)),yes,no)

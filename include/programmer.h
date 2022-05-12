@@ -76,6 +76,7 @@ extern const struct programmer_entry programmer_jlink_spi;
 extern const struct programmer_entry programmer_linux_mtd;
 extern const struct programmer_entry programmer_linux_spi;
 extern const struct programmer_entry programmer_lspcon_i2c_spi;
+extern const struct programmer_entry programmer_loongson3_spi;
 extern const struct programmer_entry programmer_mediatek_i2c_spi;
 extern const struct programmer_entry programmer_mstarddc_spi;
 extern const struct programmer_entry programmer_ni845x_spi;
@@ -274,6 +275,11 @@ extern enum chipbustype internal_buses_supported;
 /* bitbang_spi.c */
 int register_spi_bitbang_master(const struct bitbang_spi_master *master, void *spi_data);
 
+
+/* loongson3_spi.c */
+#if CONFIG_LOONGSON3_SPI == 1
+int loongson3_spi_init(void);
+#endif
 
 /* flashrom.c */
 struct decode_sizes {
